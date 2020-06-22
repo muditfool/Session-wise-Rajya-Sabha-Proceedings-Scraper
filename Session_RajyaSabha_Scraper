@@ -1,0 +1,49 @@
+
+from selenium import webdriver
+import chromedriver_binary
+import os
+import requests
+import pandas as pd
+import numpy as np
+from bs4 import BeautifulSoup
+import csv
+
+from webdriver_manager.chrome import ChromeDriverManager
+
+driver = webdriver.Chrome(ChromeDriverManager().install())
+driver.maximize_window()
+driver.implicitly_wait(10) 
+driver.get("https://rsdebate.nic.in/browse?type=sessionnumber&order=ASC&rpp=20&value=001")
+html_content = driver.find_element_by_xpath("/html/body/div[3]/div/div[4]/table")
+
+
+download_dir = "F:\\india political\\rajya sabha floor debate"
+table = driver.find_element_by_xpath("/html/body/div[3]/div/div[4]/table")
+
+data = {}
+t_headers = []
+for th in table.find_elements_by_tag_name("th"):
+	# remove any newlines and extra spaces from left and right
+	t_headers.append(th.text.replace('\n', ' ').strip())
+# Get all the rows of table
+table_data = []
+for tr in table.find_element_by_tag_name('tbody').find_elements_by_tag_name("tr"): # find all tr's from table's tbody
+	t_row = {}
+	
+	for td, th in zip(tr.find_elements_by_tag_name("td"), t_headers): 
+		t_row[th] = td.text.replace('\n', '').strip()
+	table_data.append(t_row)
+print(table_data)
+
+
+with open(os.path.join(download_dir,"data.csv"), 'w') as out_file:
+	headers = t_headers;
+	writer = csv.DictWriter(out_file, headers)
+	# write the header
+	writer.writeheader()
+	for row in table_data:
+		if row:
+			writer.writerow(row)
+	
+driver.quit()	
+
